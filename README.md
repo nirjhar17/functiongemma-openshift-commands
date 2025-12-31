@@ -2,24 +2,38 @@
 
 Fine-tune Google's FunctionGemma (270M parameters) to convert natural language into OpenShift/Kubernetes CLI commands.
 
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![License](https://img.shields.io/badge/License-Apache%202.0-green)
+![GPU](https://img.shields.io/badge/GPU-Optional-orange)
+
 ## 🎯 What This Does
 
 **Input:** "Show me all running pods"  
 **Output:** `oc get pods`
 
+## ✨ Features
+
+- 🤖 Fine-tunes Google's FunctionGemma (270M params)
+- ⚡ Uses LoRA - trains only 0.14% of parameters
+- 🖥️ Works on CPU or GPU
+- 📦 Tested on Red Hat OpenShift AI
+- 🔧 Includes GPU driver fix for CUDA 13
+
 ## 📋 Prerequisites
 
-- Red Hat OpenShift AI (or any Jupyter environment)
-- HuggingFace account with Gemma license accepted
 - Python 3.10+
-- No GPU required (CPU works fine!)
+- HuggingFace account ([accept Gemma license](https://huggingface.co/google/functiongemma-270m-it))
+- 8GB RAM minimum
+- GPU optional (training takes ~2 min on GPU, ~15 min on CPU)
 
 ## 🚀 Quick Start
 
-### 1. Install Dependencies
+### 1. Clone and Install
 
 ```bash
-pip install transformers peft datasets accelerate
+git clone https://github.com/yourusername/functiongemma-finetuning.git
+cd functiongemma-finetuning
+pip install -r requirements.txt
 ```
 
 ### 2. Login to HuggingFace
@@ -29,126 +43,90 @@ from huggingface_hub import login
 login(token="YOUR_HF_TOKEN")
 ```
 
-### 3. Load Model
+### 3. Run Training
 
-```python
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
-
-model_name = "google/functiongemma-270m-it"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.float32,
-    device_map="auto"
-)
+```bash
+python finetune_functiongemma.py
 ```
 
-### 4. Configure LoRA
+## 🔧 GPU Driver Fix (OpenShift AI)
+
+If you get `Error 803: unsupported display driver`, add this before importing torch:
 
 ```python
-from peft import LoraConfig, get_peft_model, TaskType
+import ctypes
+ctypes.CDLL('/lib64/libcuda.so.1', mode=ctypes.RTLD_GLOBAL)
 
-lora_config = LoraConfig(
-    r=8,
-    lora_alpha=16,
-    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-    lora_dropout=0.05,
-    task_type=TaskType.CAUSAL_LM
-)
-
-peft_model = get_peft_model(model, lora_config)
+import torch  # Now CUDA works!
 ```
 
-### 5. Train
+## 📊 Results
 
-```python
-from transformers import TrainingArguments, Trainer
+| Command Type | Accuracy |
+|--------------|----------|
+| Get resources (pods, services, nodes) | ✅ High |
+| Scale deployments | ⚠️ Medium |
+| Complex commands | ❌ Needs more training |
 
-training_args = TrainingArguments(
-    output_dir="./finetuned-functiongemma",
-    num_train_epochs=3,
-    per_device_train_batch_size=2,
-    learning_rate=2e-4,
-)
-
-trainer = Trainer(
-    model=peft_model,
-    args=training_args,
-    train_dataset=tokenized_dataset,
-)
-
-trainer.train()
-```
-
-## 📊 Training Data Format
-
-```python
-training_data = [
-    {"input": "show me all pods", "output": "get pods"},
-    {"input": "scale frontend to 5", "output": "scale deployment frontend --replicas=5"},
-    {"input": "create project demo", "output": "new-project demo"},
-    # Add more examples...
-]
-```
+**Overall Accuracy:** 33% (with 52 training examples)
 
 ## 📁 Project Structure
 
 ```
 functiongemma-finetuning/
-├── README.md                 # This file
-├── BLOG.md                   # Medium blog post
-├── finetune.ipynb           # Jupyter notebook (on OpenShift AI)
-├── training_data.json       # Training examples
-└── finetuned-functiongemma/ # Saved model (after training)
-    ├── adapter_config.json
-    └── adapter_model.safetensors
+├── README.md                    # This file
+├── BLOG.md                      # Detailed blog post
+├── ISSUES.md                    # Problems and solutions
+├── finetune_functiongemma.py    # Training script
+├── training_data.json           # Training examples
+└── requirements.txt             # Dependencies
 ```
 
 ## 🔧 Supported Commands
 
 | Natural Language | OpenShift Command |
 |-----------------|-------------------|
-| show me all pods | `get pods` |
-| list all pods | `get pods` |
-| get pods in all namespaces | `get pods -A` |
-| show pods with IPs | `get pods -o wide` |
-| delete pod nginx | `delete pod nginx` |
-| show all deployments | `get deployments` |
-| scale frontend to 5 | `scale deployment frontend --replicas=5` |
-| restart api deployment | `rollout restart deployment api` |
-| show all projects | `get projects` |
-| create project demo | `new-project demo` |
-| show all routes | `get routes` |
-| who am I | `whoami` |
-| show all namespaces | `get namespaces` |
-| show all events | `get events` |
-| exec bash in nginx | `exec -it nginx -- /bin/bash` |
-| apply config file | `apply -f config.yaml` |
+| list pods | `oc get pods` |
+| show deployments | `oc get deployments` |
+| get services | `oc get services` |
+| get nodes | `oc get nodes` |
+| show namespaces | `oc get namespaces` |
+| get routes | `oc get routes` |
+| get events | `oc get events` |
+| get secrets | `oc get secrets` |
 
-## 📈 Model Statistics
+## 📈 Training Stats
 
 | Metric | Value |
 |--------|-------|
 | Base Model | google/functiongemma-270m-it |
 | Total Parameters | 268,835,456 |
-| Trainable Parameters (LoRA) | 737,280 |
-| Trainable % | 0.27% |
-| Training Time (CPU) | ~10-15 minutes |
-| Training Time (GPU) | ~1 minute |
-| Adapter Size | ~3 MB |
+| Trainable (LoRA) | 368,640 (0.14%) |
+| Training Time (GPU) | ~2 minutes |
+| Training Time (CPU) | ~15 minutes |
+| Training Examples | 52 |
+
+## ⚠️ Common Issues
+
+See [ISSUES.md](./ISSUES.md) for solutions to:
+
+- GPU driver mismatch (Error 803)
+- Transformers version errors
+- Model outputting pad tokens
+- Loss going to 0
 
 ## 🧪 Testing
 
 ```python
-# Test the fine-tuned model
-test_prompts = ["show me all pods", "create project staging"]
+peft_model.eval()
 
-for prompt in test_prompts:
-    input_text = f"User: {prompt}\nCommand: oc"
-    inputs = tokenizer(input_text, return_tensors="pt")
-    outputs = peft_model.generate(**inputs, max_new_tokens=32)
-    print(tokenizer.decode(outputs[0]))
+input_text = "User: list pods\nCommand:"
+inputs = tokenizer(input_text, return_tensors="pt").to("cuda")
+
+outputs = peft_model.generate(**inputs, max_new_tokens=30, do_sample=False)
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+# Output: User: list pods
+#         Command: oc get pods
 ```
 
 ## 🔗 Resources
@@ -157,21 +135,26 @@ for prompt in test_prompts:
 - [HuggingFace Model](https://huggingface.co/google/functiongemma-270m-it)
 - [LoRA Paper](https://arxiv.org/abs/2106.09685)
 - [PEFT Documentation](https://huggingface.co/docs/peft)
-- [OpenShift AI](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai)
+- [Red Hat OpenShift AI](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai)
 
 ## 📝 License
 
-This project uses Google's Gemma model which requires accepting the [Gemma Terms of Use](https://ai.google.dev/gemma/terms).
+This project is for educational purposes. Uses Google's Gemma model which requires accepting the [Gemma Terms of Use](https://ai.google.dev/gemma/terms).
 
 ## 🤝 Contributing
 
-Feel free to:
+Contributions welcome! Ideas:
 - Add more training examples
-- Improve the training configuration
-- Add support for kubectl commands
+- Support kubectl commands
 - Build a web interface
+- Try larger models
 
-## 📧 Contact
+## 👤 Author
 
-Created as part of learning AI/ML on Red Hat OpenShift AI.
+**Nirjhar Jajodia**
 
+Created while learning AI/ML on Red Hat OpenShift AI.
+
+---
+
+⭐ Star this repo if you found it helpful!
