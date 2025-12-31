@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FunctionGemma Architecture - Block Diagram</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #1a1a2e;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --blue: #2563eb;
+            --blue-light: #dbeafe;
+            --green: #059669;
+            --green-light: #d1fae5;
+            --purple: #7c3aed;
+            --purple-light: #ede9fe;
+            --orange: #ea580c;
+            --orange-light: #ffedd5;
+            --yellow: #ca8a04;
+            --yellow-light: #fef9c3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'IBM Plex Sans', sans-serif;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .title p {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Block Diagram Layout */
+        .diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Row */
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        /* Blocks */
+        .block {
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 24px;
+            text-align: center;
+            background: var(--bg);
+            min-width: 140px;
+        }
+
+        .block-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+
+        .block-content {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .block-sub {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Block Colors */
+        .block-input {
+            background: var(--green-light);
+            border-color: var(--green);
+        }
+        .block-input .block-label { color: var(--green); }
+
+        .block-output {
+            background: var(--blue-light);
+            border-color: var(--blue);
+        }
+        .block-output .block-label { color: var(--blue); }
+
+        .block-process {
+            background: var(--purple-light);
+            border-color: var(--purple);
+        }
+        .block-process .block-label { color: var(--purple); }
+
+        .block-lora {
+            background: var(--orange-light);
+            border-color: var(--orange);
+        }
+        .block-lora .block-label { color: var(--orange); }
+
+        .block-data {
+            background: var(--yellow-light);
+            border-color: var(--yellow);
+        }
+        .block-data .block-label { color: var(--yellow); }
+
+        /* Large Model Block */
+        .model-block {
+            border: 3px solid var(--purple);
+            border-radius: 12px;
+            padding: 24px;
+            background: #faf5ff;
+            width: 100%;
+        }
+
+        .model-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed var(--purple);
+        }
+
+        .model-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--purple);
+        }
+
+        .model-params {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            background: var(--purple);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .model-pipeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .pipeline-block {
+            flex: 1;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            padding: 14px 10px;
+            text-align: center;
+            background: white;
+        }
+
+        .pipeline-num {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .pipeline-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+
+        .pipeline-desc {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .pipeline-block.lora-block {
+            border-color: var(--orange);
+            background: var(--orange-light);
+        }
+
+        /* Arrows */
+        .arrow {
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            font-weight: 300;
+        }
+
+        .arrow-down {
+            font-size: 1.6rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        /* LoRA Detail Box */
+        .lora-detail {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--orange-light);
+            border: 2px solid var(--orange);
+            border-radius: 8px;
+        }
+
+        .lora-detail-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--orange);
+            margin-bottom: 10px;
+        }
+
+        .lora-stats {
+            display: flex;
+            gap: 24px;
+        }
+
+        .lora-stat {
+            text-align: center;
+        }
+
+        .lora-stat-value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .lora-stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Training Section */
+        .training-section {
+            margin-top: 30px;
+            padding-top: 24px;
+            border-top: 2px dashed var(--border);
+        }
+
+        .training-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .training-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">
+            <h1>FunctionGemma Fine-Tuning Architecture</h1>
+            <p>Natural Language → OpenShift Commands</p>
+        </div>
+
+        <div class="diagram">
+            <!-- Input -->
+            <div class="row">
+                <div class="block block-input">
+                    <div class="block-label">Input</div>
+                    <div class="block-content">"show all pods"</div>
+                    <div class="block-sub">Natural Language</div>
+                </div>
+            </div>
+
+            <div class="arrow-down">↓</div>
+
+            <!-- Model Block -->
+            <div class="model-block">
+                <div class="model-header">
+                    <div class="model-title">FunctionGemma Model</div>
+                    <div class="model-params">270M params</div>
+                </div>
+
+                <div class="model-pipeline">
+                    <div class="pipeline-block">
+                        <div class="pipeline-num">1</div>
+                        <div class="pipeline-name">Tokenizer</div>
+                        <div class="pipeline-desc">text → tokens</div>
+                    </div>
+                    
+                    <div class="arrow">→</div>
+                    
+                    <div class="pipeline-block">
+                        <div class="pipeline-num">2</div>
+                        <div class="pipeline-name">Transformer</div>
+                        <div class="pipeline-desc">18 layers</div>
+                    </div>
+                    
+                    <div class="arrow">→</div>
+                    
+                    <div class="pipeline-block lora-block">
+                        <div class="pipeline-num">3</div>
+                        <div class="pipeline-name">LoRA</div>
+                        <div class="pipeline-desc">adapters</div>
+                    </div>
+                    
+                    <div class="arrow">→</div>
+                    
+                    <div class="pipeline-block">
+                        <div class="pipeline-num">4</div>
+                        <div class="pipeline-name">Output</div>
+                        <div class="pipeline-desc">tokens → text</div>
+                    </div>
+                </div>
+
+                <!-- LoRA Detail -->
+                <div class="lora-detail">
+                    <div class="lora-detail-title">⚡ LoRA: Low-Rank Adaptation</div>
+                    <div class="lora-stats">
+                        <div class="lora-stat">
+                            <div class="lora-stat-value">268.8M</div>
+                            <div class="lora-stat-label">Frozen</div>
+                        </div>
+                        <div class="lora-stat">
+                            <div class="lora-stat-value">368K</div>
+                            <div class="lora-stat-label">Trainable</div>
+                        </div>
+                        <div class="lora-stat">
+                            <div class="lora-stat-value">0.14%</div>
+                            <div class="lora-stat-label">Updated</div>
+                        </div>
+                        <div class="lora-stat">
+                            <div class="lora-stat-value">r=8</div>
+                            <div class="lora-stat-label">Rank</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow-down">↓</div>
+
+            <!-- Output -->
+            <div class="row">
+                <div class="block block-output">
+                    <div class="block-label">Output</div>
+                    <div class="block-content">oc get pods</div>
+                    <div class="block-sub">OpenShift Command</div>
+                </div>
+            </div>
+
+            <!-- Training Section -->
+            <div class="training-section">
+                <div class="training-title">Training Pipeline</div>
+                <div class="training-flow">
+                    <div class="block block-data">
+                        <div class="block-label">Data</div>
+                        <div class="block-content">53 Examples</div>
+                        <div class="block-sub">NL → Command pairs</div>
+                    </div>
+                    
+                    <div class="arrow">→</div>
+                    
+                    <div class="block block-process">
+                        <div class="block-label">Training</div>
+                        <div class="block-content">30 Epochs</div>
+                        <div class="block-sub">~2 minutes</div>
+                    </div>
+                    
+                    <div class="arrow">→</div>
+                    
+                    <div class="block block-output">
+                        <div class="block-label">Result</div>
+                        <div class="block-content">33% Accuracy</div>
+                        <div class="block-sub">on test set</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
