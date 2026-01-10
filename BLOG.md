@@ -17,9 +17,7 @@ We're building an AI that understands plain English and converts it into OpenShi
 
 ## Google FunctionGemma: A Tiny but Special AI
 
-### Not Your Typical Chatbot
-
-Most AI models you've heard of (ChatGPT, Claude, Llama) are **chat models** – they're designed to have conversations with you. They're like a friend who loves to talk.
+Most AI models you've heard of (ChatGPT, Claude, Llama) are **chat models** – they're designed to have conversations with you.
 
 **FunctionGemma is different.** It's a **function-calling model** – designed to understand what you want and generate structured function calls. 
 
@@ -38,7 +36,7 @@ Here's the cool part – FunctionGemma is **tiny**:
 |-------|------------|------------|
 | GPT-4 | ~1,700,000 Million | Massive data centers |
 | Llama 70B | 70,000 Million | Expensive GPUs |
-| **FunctionGemma** | **270 Million** | **Your laptop!** |
+| **FunctionGemma** | **270 Million** | **Your laptop!/Mobile** |
 
 Google designed it to be small enough to run on phones for things like:
 - "Turn off the lights" → `smart_home(lights="off")`
