@@ -21,7 +21,9 @@ We're building an AI that understands plain English and converts it into OpenShi
 
 Most AI models you've heard of (ChatGPT, Claude, Llama) are **chat models** – they're designed to have conversations with you. They're like a friend who loves to talk.
 
-**FunctionGemma is different.** It's a **function-calling model** – designed to understand what you want and call the right function to do it. It's like a smart assistant who doesn't just chat, but actually **does things**.
+**FunctionGemma is different.** It's a **function-calling model** – designed to understand what you want and generate structured function calls. 
+
+> **Important:** FunctionGemma does not execute functions itself. It outputs structured text (like `oc get pods`) that your application code can then parse and execute. The model acts as a bridge between natural language and software actions.
 
 | Chat Model (GPT, Llama) | Function Model (FunctionGemma) |
 |-------------------------|-------------------------------|
