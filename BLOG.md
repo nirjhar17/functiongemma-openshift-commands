@@ -286,6 +286,8 @@ Step    Loss
 300     1.44   ← Model is learning!
 ```
 
+> **Note:** With 53 examples and batch size 4, each epoch has ~13 steps. Over 30 epochs, that's roughly 390 total training steps.
+
 ---
 
 ## 🧪 Results
