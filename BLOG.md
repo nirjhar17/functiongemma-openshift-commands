@@ -15,7 +15,7 @@ That's it! We're building an AI that understands plain English and converts it i
 
 ---
 
-## 🤖 Meet FunctionGemma: A Tiny but Special AI
+## Google FunctionGemma: A Tiny but Special AI
 
 ### Not Your Typical Chatbot
 
