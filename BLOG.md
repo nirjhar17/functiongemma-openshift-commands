@@ -1,6 +1,6 @@
-# Teaching a Tiny AI to Understand OpenShift Commands
+# Fine-Tuning FunctionGemma for OpenShift Commands with LoRA on OpenShift AI
 
-*How I fine-tuned Google's FunctionGemma on Red Hat OpenShift AI*
+*A step-by-step guide to teaching Google's tiny AI model to understand Kubernetes/OpenShift CLI*
 
 ---
 
