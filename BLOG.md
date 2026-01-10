@@ -2,49 +2,43 @@
 
 *A step-by-step guide to teaching Google's tiny AI model to understand Kubernetes/OpenShift CLI*
 
----
-
 ## What Are We Building?
 
 Imagine talking to your computer like this:
 
-> **You:** "Show me all running pods"  
-> **AI:** `oc get pods`
+**You:** "Show me all running pods"
+
+**AI:** `oc get pods`
 
 We're building an AI that understands plain English and converts it into OpenShift commands.
 
----
-
 ## Google FunctionGemma: A Tiny but Special AI
 
-Most AI models you've heard of (ChatGPT, Claude, Llama) are **chat models** – they're designed to have conversations with you.
+Most AI models you've heard of (ChatGPT, Claude, Llama) are **chat models** — they're designed to have conversations with you.
 
-**FunctionGemma is different.** It's a **function-calling model** – designed to understand what you want and generate structured function calls. 
+**FunctionGemma is different.** It's a **function-calling model** — designed to understand what you want and generate structured function calls.
 
-> **Important:** FunctionGemma does not execute functions itself. It outputs structured text (like `oc get pods`) that your application code can then parse and execute. The model acts as a bridge between natural language and software actions.
+**Important:** FunctionGemma does not execute functions itself. It outputs structured text (like `oc get pods`) that your application code can then parse and execute. The model acts as a bridge between natural language and software actions.
 
-| Chat Model (GPT, Llama) | Function Model (FunctionGemma) |
-|-------------------------|-------------------------------|
-| "The weather looks nice today! Would you like me to tell you more about the forecast?" | `weather(location="NYC")` |
-| Talks to you | **Does things for you** |
+**Chat Model vs Function Model:**
+- **Chat Model (GPT, Llama):** "The weather looks nice today! Would you like me to tell you more about the forecast?"
+- **Function Model (FunctionGemma):** `weather(location="NYC")`
+
+One talks to you. The other **does things for you**.
 
 ### Why Only 270 Million Parameters?
 
-Here's the cool part – FunctionGemma is **tiny**:
+Here's the cool part — FunctionGemma is **tiny**:
 
-| Model | Parameters | Can Run On |
-|-------|------------|------------|
-| GPT-4 | ~1,700,000 Million | Massive data centers |
-| Llama 70B | 70,000 Million | Expensive GPUs |
-| **FunctionGemma** | **270 Million** | **Your laptop!/Mobile** |
+- **GPT-4:** ~1.7 Trillion parameters → Massive data centers
+- **Llama 70B:** 70 Billion parameters → Expensive GPUs
+- **FunctionGemma:** 270 Million parameters → **Your laptop/Mobile!**
 
-Google designed it to be small enough to run on phones for things like:
+Google designed it to be small enough to run on phones:
 - "Turn off the lights" → `smart_home(lights="off")`
 - "Set a 5 minute timer" → `timer(minutes=5)`
 
 **My idea:** What if we teach it OpenShift commands instead?
-
----
 
 ## How Does Fine-Tuning Work?
 
@@ -57,23 +51,18 @@ FunctionGemma already knows **how** to call functions. But it doesn't know **Ope
 Fine-tuning means teaching the model new knowledge while keeping what it already knows. We show it examples:
 
 ```
-You say: "list all pods"        → Model should output: oc get pods
-You say: "scale nginx to 5"     → Model should output: oc scale deployment nginx --replicas=5
-You say: "delete pod broken"    → Model should output: oc delete pod broken
+You say: "list all pods"        → Model outputs: oc get pods
+You say: "scale nginx to 5"     → Model outputs: oc scale deployment nginx --replicas=5
+You say: "delete pod broken"    → Model outputs: oc delete pod broken
 ```
 
 After seeing enough examples, the model learns the pattern!
-
----
 
 ## LoRA: The Secret to Cheap Fine-Tuning
 
 ### The Challenge
 
-Normally, fine-tuning means updating **all 270 million parameters**. That needs:
-- Expensive GPUs
-- Hours of training
-- Lots of memory
+Normally, fine-tuning means updating **all 270 million parameters**. That needs expensive GPUs, hours of training, and lots of memory.
 
 ### The Solution: LoRA (Low-Rank Adaptation)
 
@@ -85,65 +74,38 @@ LoRA is a clever trick. Instead of changing the whole model, we:
 
 Think of it like this:
 
-> **Without LoRA:** Rewriting an entire textbook to add one chapter  
-> **With LoRA:** Adding sticky notes to the existing textbook
+**Without LoRA:** Rewriting an entire textbook to add one chapter
+
+**With LoRA:** Adding sticky notes to the existing textbook
 
 ### The Numbers
 
-```
-Original model:     268,835,456 parameters (FROZEN - don't change)
-LoRA adapters:          368,640 parameters (TRAINABLE - learn new stuff)
-                        ─────────
-Trainable:                 0.14%  ← We only train this tiny part!
-```
+- **Original model:** 268,835,456 parameters (FROZEN)
+- **LoRA adapters:** 368,640 parameters (TRAINABLE)
+- **Trainable:** Only 0.14%!
 
 **Result:** Training takes 2 minutes instead of hours!
 
----
-
-## The Architecture (Simple Version)
+## The Architecture
 
 Here's what happens when you ask "show all pods":
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    FunctionGemma Model                       │
-│                                                              │
-│  ┌──────────────┐      ┌──────────────┐     ┌────────────┐  │
-│  │   Tokenizer  │ ──►  │  Transformer │ ──► │  Output    │  │
-│  │ "show pods"  │      │   Layers     │     │ "get pods" │  │
-│  │  → [123,456] │      │  (+ LoRA!)   │     │            │  │
-│  └──────────────┘      └──────────────┘     └────────────┘  │
-│                              │                               │
-│                    ┌─────────┴─────────┐                    │
-│                    │  LoRA Adapters    │                    │
-│                    │  (the new stuff   │                    │
-│                    │   we trained!)    │                    │
-│                    └───────────────────┘                    │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Step by step:**
 
 1. **Tokenizer** converts your text into numbers the model understands
 2. **Transformer layers** process the input (this is the "brain")
 3. **LoRA adapters** add our OpenShift knowledge on top
 4. **Output** is the predicted command
 
----
+The LoRA adapters sit alongside the frozen transformer layers, injecting our new OpenShift knowledge without changing the original model.
 
 ## Setting Up on OpenShift AI
 
 ### Step 1: Create a Workbench
 
-I used **Red Hat OpenShift AI** – a platform that makes AI workloads easy on Kubernetes.
+I used **Red Hat OpenShift AI** — a platform that makes AI workloads easy on Kubernetes.
 
 1. Log into OpenShift AI Dashboard
 2. Create a Data Science Project: "fine-tune"
-3. Create a Workbench:
-   - **Image:** PyTorch | CUDA | Python 3.12
-   - **Size:** Medium
-   - **GPU:** 1x NVIDIA (optional but faster)
+3. Create a Workbench with PyTorch, CUDA, Python 3.12, Medium size, and optionally 1x NVIDIA GPU
 
 ### Step 2: Install Libraries
 
@@ -151,23 +113,19 @@ I used **Red Hat OpenShift AI** – a platform that makes AI workloads easy on K
 !pip install transformers>=4.51.0 peft datasets accelerate --quiet
 ```
 
-| Library | What It Does |
-|---------|--------------|
-| `transformers` | Load AI models from HuggingFace |
-| `peft` | LoRA and other efficient fine-tuning methods |
-| `datasets` | Handle training data |
-| `accelerate` | Speed up training |
+- **transformers:** Load AI models from HuggingFace
+- **peft:** LoRA and other efficient fine-tuning methods
+- **datasets:** Handle training data
+- **accelerate:** Speed up training
 
 ### Step 3: Login to HuggingFace
 
-You need to accept Google's license first at [huggingface.co/google/functiongemma-270m-it](https://huggingface.co/google/functiongemma-270m-it)
+You need to accept Google's license first at the model page: `huggingface.co/google/functiongemma-270m-it`
 
 ```python
 from huggingface_hub import login
 login(token="your-hf-token")
 ```
-
----
 
 ## The GPU Driver Fix
 
@@ -190,8 +148,6 @@ import torch
 print(f"GPU: {torch.cuda.get_device_name(0)}")  # Now it works!
 ```
 
----
-
 ## Loading the Model
 
 ```python
@@ -212,8 +168,6 @@ print(f"Loaded {model.num_parameters():,} parameters")
 ```
 
 **Important:** Use `float32` not `float16`. I wasted hours debugging because float16 made the model output garbage!
-
----
 
 ## Setting Up LoRA
 
@@ -236,11 +190,9 @@ peft_model = get_peft_model(model, lora_config)
 - Adds 368,640 trainable adapter parameters
 - Now we only train 0.14% of the model!
 
----
-
 ## Training Data
 
-I created 53 examples of natural language → commands:
+I created 53 examples of natural language to commands:
 
 ```python
 training_data = [
@@ -254,8 +206,6 @@ training_data = [
 ```
 
 **Tip:** Multiple variations of the same command help the model learn better!
-
----
 
 ## Training
 
@@ -277,63 +227,48 @@ trainer.train()
 **On Tesla T4 GPU:** Training took ~2 minutes!
 
 **Training Progress:**
-```
-Step    Loss
-25      8.19   ← Model is confused
-50      5.12
-100     2.73
-200     1.61
-300     1.44   ← Model is learning!
-```
+- Step 25: Loss 8.19 (Model is confused)
+- Step 50: Loss 5.12
+- Step 100: Loss 2.73
+- Step 200: Loss 1.61
+- Step 300: Loss 1.44 (Model is learning!)
 
-> **Note:** With 53 examples and batch size 4, each epoch has ~13 steps. Over 30 epochs, that's roughly 390 total training steps.
-
----
+**Note:** With 53 examples and batch size 4, each epoch has ~13 steps. Over 30 epochs, that's roughly 390 total training steps.
 
 ## Results
 
-| Input | Output | Correct? |
-|-------|--------|----------|
-| "list pods" | oc get pods | Yes |
-| "list deployments" | oc get deployments | Yes |
-| "get services" | oc get services | Yes |
-| "get nodes" | oc get nodes | Yes |
-| "scale nginx to 5" | oc describe deployment nginx | No |
+Here's how the fine-tuned model performed:
+
+- "list pods" → `oc get pods` (Correct)
+- "list deployments" → `oc get deployments` (Correct)
+- "get services" → `oc get services` (Correct)
+- "get nodes" → `oc get nodes` (Correct)
+- "scale nginx to 5" → `oc describe deployment nginx` (Wrong)
 
 **Accuracy: 33%** with 53 training examples.
 
-### What Worked
-- Simple "get X" commands
+**What Worked:** Simple "get X" commands
 
-### What Needs More Training
-- Complex commands with arguments (scale, delete)
-- More training examples would help!
-
----
+**What Needs More Training:** Complex commands with arguments (scale, delete). More training examples would help!
 
 ## What I Learned
 
-1. **Small models can be useful** – 270M parameters is enough for specific tasks
-2. **LoRA makes fine-tuning accessible** – No expensive hardware needed
-3. **Use float32, not float16** – Stability matters more than speed
-4. **GPU driver issues are real** – The ctypes fix saved hours of debugging
-5. **More data = better results** – 53 examples got 33% accuracy
-
----
+1. **Small models can be useful** — 270M parameters is enough for specific tasks
+2. **LoRA makes fine-tuning accessible** — No expensive hardware needed
+3. **Use float32, not float16** — Stability matters more than speed
+4. **GPU driver issues are real** — The ctypes fix saved hours of debugging
+5. **More data = better results** — 53 examples got 33% accuracy
 
 ## Project Files
 
-All code is on GitHub: [functiongemma-openshift-commands](https://github.com/nirjhar17/functiongemma-openshift-commands)
+All code is on GitHub: **github.com/nirjhar17/functiongemma-openshift-commands**
 
-```
-├── README.md              # Quick start guide
-├── BLOG.md                # This article
-├── ISSUES.md              # Problems I hit and solutions
-├── finetune_functiongemma.py  # Complete training script
-└── training_data.json     # Training examples
-```
-
----
+The repository includes:
+- README.md (Quick start guide)
+- BLOG.md (This article)
+- ISSUES.md (Problems I hit and solutions)
+- finetune_functiongemma.py (Complete training script)
+- training_data.json (Training examples)
 
 ## What's Next?
 
@@ -342,19 +277,11 @@ All code is on GitHub: [functiongemma-openshift-commands](https://github.com/nir
 - Build a web interface
 - Deploy as an API
 
----
-
 ## Resources
 
-- [Google FunctionGemma](https://ai.google.dev/gemma/docs/functiongemma)
-- [HuggingFace Model](https://huggingface.co/google/functiongemma-270m-it)
-- [LoRA Paper](https://arxiv.org/abs/2106.09685)
-- [Red Hat OpenShift AI](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai)
+- Google FunctionGemma: ai.google.dev/gemma/docs/functiongemma
+- HuggingFace Model: huggingface.co/google/functiongemma-270m-it
+- LoRA Paper: arxiv.org/abs/2106.09685
+- Red Hat OpenShift AI: redhat.com/en/technologies/cloud-computing/openshift/openshift-ai
 
----
-
-**Questions?** Check [ISSUES.md](./ISSUES.md) for common problems and solutions!
-
----
-
-**Tags:** #MachineLearning #AI #OpenShift #Kubernetes #Google #Gemma #FineTuning #LoRA #Tutorial
+Questions? Check the ISSUES.md file in the GitHub repo for common problems and solutions!
