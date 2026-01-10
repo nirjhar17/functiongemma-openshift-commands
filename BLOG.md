@@ -11,7 +11,7 @@ Imagine talking to your computer like this:
 > **You:** "Show me all running pods"  
 > **AI:** `oc get pods`
 
-That's it! We're building an AI that understands plain English and converts it into OpenShift commands. No more googling "how to list pods in kubernetes" – just ask naturally and get the command.
+That's it! We're building an AI that understands plain English and converts it into OpenShift commands. 
 
 ---
 
