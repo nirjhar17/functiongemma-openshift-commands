@@ -1,0 +1,4 @@
+theme: jekyll-theme-minimal
+title: Fine-Tuning FunctionGemma for OpenShift Commands
+description: A step-by-step guide to teaching Google's tiny AI model to understand Kubernetes/OpenShift CLI
+
