@@ -4,18 +4,18 @@
 
 ---
 
-## 🎯 What Are We Building?
+## What Are We Building?
 
 Imagine talking to your computer like this:
 
 > **You:** "Show me all running pods"  
 > **AI:** `oc get pods`
 
-That's it! We're building an AI that understands plain English and converts it into OpenShift commands. 
+That's it! We're building an AI that understands plain English and converts it into OpenShift commands. No more googling "how to list pods in kubernetes" – just ask naturally and get the command.
 
 ---
 
-## Google FunctionGemma: A Tiny but Special AI
+## Meet FunctionGemma: A Tiny but Special AI
 
 ### Not Your Typical Chatbot
 
@@ -46,7 +46,7 @@ Google designed it to be small enough to run on phones for things like:
 
 ---
 
-## 🧠 How Does Fine-Tuning Work?
+## How Does Fine-Tuning Work?
 
 ### The Problem
 
@@ -66,7 +66,7 @@ After seeing enough examples, the model learns the pattern!
 
 ---
 
-## ⚡ LoRA: The Secret to Cheap Fine-Tuning
+## LoRA: The Secret to Cheap Fine-Tuning
 
 ### The Challenge
 
@@ -101,7 +101,7 @@ Trainable:                 0.14%  ← We only train this tiny part!
 
 ---
 
-## 🏗️ The Architecture (Simple Version)
+## The Architecture (Simple Version)
 
 Here's what happens when you ask "show all pods":
 
@@ -132,7 +132,7 @@ Here's what happens when you ask "show all pods":
 
 ---
 
-## 🛠️ Setting Up on OpenShift AI
+## Setting Up on OpenShift AI
 
 ### Step 1: Create a Workbench
 
@@ -169,7 +169,7 @@ login(token="your-hf-token")
 
 ---
 
-## 🔧 The GPU Driver Fix
+## The GPU Driver Fix
 
 Here's something I learned the hard way. On OpenShift AI, the GPU might not work!
 
@@ -192,7 +192,7 @@ print(f"GPU: {torch.cuda.get_device_name(0)}")  # Now it works!
 
 ---
 
-## 📥 Loading the Model
+## Loading the Model
 
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -207,15 +207,15 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="cuda"
 )
 
-print(f"✅ Loaded {model.num_parameters():,} parameters")
-# Output: ✅ Loaded 268,835,456 parameters
+print(f"Loaded {model.num_parameters():,} parameters")
+# Output: Loaded 268,835,456 parameters
 ```
 
 **Important:** Use `float32` not `float16`. I wasted hours debugging because float16 made the model output garbage!
 
 ---
 
-## ⚡ Setting Up LoRA
+## Setting Up LoRA
 
 ```python
 from peft import LoraConfig, get_peft_model, TaskType
@@ -238,7 +238,7 @@ peft_model = get_peft_model(model, lora_config)
 
 ---
 
-## 📊 Training Data
+## Training Data
 
 I created 53 examples of natural language → commands:
 
@@ -257,7 +257,7 @@ training_data = [
 
 ---
 
-## 🚀 Training
+## Training
 
 ```python
 from transformers import TrainingArguments, Trainer
@@ -290,20 +290,20 @@ Step    Loss
 
 ---
 
-## 🧪 Results
+## Results
 
 | Input | Output | Correct? |
 |-------|--------|----------|
-| "list pods" | oc get pods | ✅ |
-| "list deployments" | oc get deployments | ✅ |
-| "get services" | oc get services | ✅ |
-| "get nodes" | oc get nodes | ✅ |
-| "scale nginx to 5" | oc describe deployment nginx | ❌ |
+| "list pods" | oc get pods | Yes |
+| "list deployments" | oc get deployments | Yes |
+| "get services" | oc get services | Yes |
+| "get nodes" | oc get nodes | Yes |
+| "scale nginx to 5" | oc describe deployment nginx | No |
 
 **Accuracy: 33%** with 53 training examples.
 
 ### What Worked
-- Simple "get X" commands ✅
+- Simple "get X" commands
 
 ### What Needs More Training
 - Complex commands with arguments (scale, delete)
@@ -311,7 +311,7 @@ Step    Loss
 
 ---
 
-## 💡 What I Learned
+## What I Learned
 
 1. **Small models can be useful** – 270M parameters is enough for specific tasks
 2. **LoRA makes fine-tuning accessible** – No expensive hardware needed
@@ -321,7 +321,7 @@ Step    Loss
 
 ---
 
-## 📁 Project Files
+## Project Files
 
 All code is on GitHub: [functiongemma-openshift-commands](https://github.com/nirjhar17/functiongemma-openshift-commands)
 
@@ -335,7 +335,7 @@ All code is on GitHub: [functiongemma-openshift-commands](https://github.com/nir
 
 ---
 
-## 🔜 What's Next?
+## What's Next?
 
 - Add 200+ training examples for better accuracy
 - Try a larger model (Gemma 2B)
@@ -344,7 +344,7 @@ All code is on GitHub: [functiongemma-openshift-commands](https://github.com/nir
 
 ---
 
-## 📚 Resources
+## Resources
 
 - [Google FunctionGemma](https://ai.google.dev/gemma/docs/functiongemma)
 - [HuggingFace Model](https://huggingface.co/google/functiongemma-270m-it)
